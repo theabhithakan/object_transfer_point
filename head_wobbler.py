@@ -47,33 +47,33 @@ class Wobbler(object):
         self._head = baxter_interface.Head()
 
         # verify robot is enabled
-        print("Getting robot state... ")
-        self._rs = baxter_interface.RobotEnable(CHECK_VERSION)
-        self._init_state = self._rs.state().enabled
-        print("Enabling robot... ")
-        self._rs.enable()
-        print("Running. Ctrl-c to quit")
+        # print("Getting robot state... ")
+        # self._rs = baxter_interface.RobotEnable(CHECK_VERSION)
+        # self._init_state = self._rs.state().enabled
+        # print("Enabling robot... ")
+        # self._rs.enable()
+        # print("Running. Ctrl-c to quit")
 
-    def clean_shutdown(self):
-        """
-        Exits example cleanly by moving head to neutral position and
-        maintaining start state
-        """
-        print("\nExiting example...")
-        if self._done:
-            self.set_neutral()
-        if not self._init_state and self._rs.state().enabled:
-            print("Disabling robot...")
-            self._rs.disable()
+    # def clean_shutdown(self):
+    #     """
+    #     Exits example cleanly by moving head to neutral position and
+    #     maintaining start state
+    #     """
+    #     print("\nExiting example...")
+    #     if self._done:
+    #         self.set_neutral()
+    #     if not self._init_state and self._rs.state().enabled:
+    #         print("Disabling robot...")
+    #         self._rs.disable()
 
-    def set_neutral(self):
-        """
-        Sets the head back into a neutral pose
-        """
-        self._head.set_pan(0.0)
+    # def set_neutral(self):
+    #     """
+    #     Sets the head back into a neutral pose
+    #     """
+    #     self._head.set_pan(0.0)
 
     def wobble(self):
-        self.set_neutral()
+        # self.set_neutral()
         """
         Performs the wobbling
         """
@@ -81,14 +81,16 @@ class Wobbler(object):
         command_rate = rospy.Rate(1)
         control_rate = rospy.Rate(100)
         start = rospy.get_time()
-        while not rospy.is_shutdown() and (rospy.get_time() - start < 10.0):
-            angle = random.uniform(-1.5, 1.5)
-            anlge = 0
+        while not rospy.is_shutdown():
+            angle = random.uniform(-0.7, 0.7)
             while (not rospy.is_shutdown() and
                    not (abs(self._head.pan() - angle) <=
                        baxter_interface.HEAD_PAN_ANGLE_TOLERANCE)):
-                self._head.set_pan(angle, speed=0.3, timeout=0)
+                self._head.set_pan(angle, speed=0.03, timeout=0)
                 control_rate.sleep()
+            nod = random.randint(1,1000)
+            if nod % 4 == 0:
+                self._head.command_nod()
             command_rate.sleep()
 
         self._done = True
@@ -110,7 +112,7 @@ def main():
     rospy.init_node("rsdk_head_wobbler")
 
     wobbler = Wobbler()
-    rospy.on_shutdown(wobbler.clean_shutdown)
+    # rospy.on_shutdown(wobbler.clean_shutdown)
     print("Wobbling... ")
     wobbler.wobble()
     print("Done.")
