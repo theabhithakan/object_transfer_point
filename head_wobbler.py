@@ -29,9 +29,8 @@
 
 import argparse
 import random
-
+import getch
 import rospy
-
 import baxter_interface
 
 from baxter_interface import CHECK_VERSION
@@ -66,11 +65,11 @@ class Wobbler(object):
     #         print("Disabling robot...")
     #         self._rs.disable()
 
-    # def set_neutral(self):
-    #     """
-    #     Sets the head back into a neutral pose
-    #     """
-    #     self._head.set_pan(0.0)
+    def set_neutral(self):
+        """
+        Sets the head back into a neutral pose
+        """
+        self._head.set_pan(0.0)
 
     def wobble(self):
         # self.set_neutral()
@@ -81,21 +80,51 @@ class Wobbler(object):
         command_rate = rospy.Rate(1)
         control_rate = rospy.Rate(100)
         start = rospy.get_time()
-        while not rospy.is_shutdown():
-            angle = random.uniform(-0.7, 0.7)
-            while (not rospy.is_shutdown() and
-                   not (abs(self._head.pan() - angle) <=
-                       baxter_interface.HEAD_PAN_ANGLE_TOLERANCE)):
-                self._head.set_pan(angle, speed=0.03, timeout=0)
-                control_rate.sleep()
-            nod = random.randint(1,1000)
-            if nod % 4 == 0:
-                self._head.command_nod()
-            command_rate.sleep()
+        print "press Esc to start experiment"
+        wobble = True
+
+        try:
+            while wobble == True:
+                angle = random.uniform(-0.7, 0.7)
+                while (not rospy.is_shutdown() and
+                       not (abs(self._head.pan() - angle) <=
+                           baxter_interface.HEAD_PAN_ANGLE_TOLERANCE)):
+                    self._head.set_pan(angle, speed=0.03, timeout=0)
+                    control_rate.sleep()
+                nod = random.randint(1,1000)
+                if nod % 4 == 0:
+                    self._head.command_nod()
+                command_rate.sleep()
+                # if getch.kbhit():
+
+        except KeyboardInterrupt:
+            self.set_neutral()
+            # wobble == False
+                    # break
+
 
         self._done = True
         rospy.signal_shutdown("Example finished.")
 
+#     def search(self):
+#         """RSDK Head Example: Wobbler
+    
+#         Nods the head and pans side-to-side towards random angles.
+#         Demonstrates the use of the baxter_interface.Head class.
+#         """
+#         arg_fmt = argparse.RawDescriptionHelpFormatter
+#         parser = argparse.ArgumentParser(formatter_class=arg_fmt,
+#             description=main.__doc__)
+#         parser.parse_args(rospy.myargv()[1:])
+
+#         # print("Initializing node... ")
+#         # rospy.init_node("rsdk_head_wobbler")
+
+#         wobbler = Wobbler()
+#         # rospy.on_shutdown(wobbler.clean_shutdown)
+#         print("Wobbling... ")
+#         wobbler.wobble()
+#         print("Done.")
 
 def main():
     """RSDK Head Example: Wobbler
@@ -109,12 +138,13 @@ def main():
     parser.parse_args(rospy.myargv()[1:])
 
     print("Initializing node... ")
-    rospy.init_node("rsdk_head_wobbler")
+    rospy.init_node("rsdk_head_wobbler", disable_signals=True)
 
     wobbler = Wobbler()
     # rospy.on_shutdown(wobbler.clean_shutdown)
     print("Wobbling... ")
     wobbler.wobble()
+    wobbler.set_neutral()
     print("Done.")
     
 if __name__ == '__main__':
