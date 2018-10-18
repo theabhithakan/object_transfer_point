@@ -73,6 +73,12 @@ class ProMP:
         #     print "GOOOO!"
         #     self.start = 1
 
+    def reset_right_hand(self):
+        reset_angles = {'right_s0': -0.1902136176977913, 'right_s1': -0.24236896448589537, 'right_w0': 1.6171992456281974, 'right_w1': 0.4966262800779027, 'right_w2': -2.9931800123614134, 'right_e0': 0.9583544972314122, 'right_e1': 1.2133788032173622}
+        reset_angles = init_angles = {'right_s0': -1.469170099597255, 'right_s1': 0.24160197409195266, 'right_w0': -0.2807184841830307, 'right_w1': 0.8364030245945219, 'right_w2': 0.41724277430483253, 'right_e0': 0.5069806503961293, 'right_e1': 1.5500875861582106}
+        self.limb.move_to_joint_positions(reset_angles,timeout=4.0)
+
+
     def test_promp(self):
         '''
         Test ProMP

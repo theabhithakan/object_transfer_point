@@ -71,6 +71,16 @@ class Wobbler(object):
         """
         self._head.set_pan(0.0)
 
+    def look_right(self):
+
+        self._head.set_pan(-1.0)
+
+
+    def look_left(self):
+
+        self._head.set_pan(1.0)
+
+
     def wobble(self):
         # self.set_neutral()
         """
