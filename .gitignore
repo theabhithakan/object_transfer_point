@@ -1,3 +1,7 @@
 *.pyc
-*.csv
+
 *.mat
+
+*.csv
+
+data/
