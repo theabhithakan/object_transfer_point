@@ -21,6 +21,8 @@ Select or Deselect Hands option according to the need
 
 You can see the tracking on the Screen
 
+**NOTE: Make sure that the Origin is set to Sensor**
+
 Logging Kinect data to the Ubuntu workstation.
 Run Windows command line
 Press Win+R key, input ```cmd``` in the box and hit Enter.
