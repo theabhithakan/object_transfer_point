@@ -19,7 +19,7 @@ def main():
     base = move_base.MoveBase()
     print "initialized"
     grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
-
+    obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
     
     stand_right = promp.ProMP("src/handover/object_transfer_point/data/stand_right")
     # stand_right = promp.ProMP("../scripts/DataICRA19/BaselineB")
@@ -58,6 +58,19 @@ def main():
     # grasp_pub.publish(drop)
     # time.sleep(2.0)
 
+
+    face.look_right()
+    stand_right.test_promp()
+    time.sleep(2.0)
+    grasp_pub.publish(take)
+    time.sleep(4.0)
+    stand_right.safe_dist()
+    stand_right.to_the_basket()
+    # time.sleep(2.0)
+    grasp_pub.publish(drop)
+    # time.sleep(2.0)
+    face.set_neutral()
+    stand_right.reset_right_hand()
 
     text = raw_input("Start 1st case? (y/n)")
     if text == 'n':
