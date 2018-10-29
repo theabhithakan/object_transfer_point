@@ -11,7 +11,9 @@ Click on the icon and select Control Interface.
 
 In Setup
 Default IP = 127.0  .0  .1
-Port = 3333
+
+Port = 7000 Or whichever is in the server.js file
+
 Start the service if not started already
 
 Expand the Kinect for Windows option in the list
