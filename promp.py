@@ -7,6 +7,7 @@ from scipy import linalg
 # from handover.msg import skeleton
 from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import PointStamped
+from handover.msg import skeleton
 from geometry_msgs.msg import PoseArray
 from reflex_msgs.msg import Command
 import baxter_interface
@@ -23,7 +24,7 @@ class ProMP:
         self.goal_pub = rospy.Publisher("/promp_data", Float64MultiArray, queue_size=1)
         self.grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
 
-        self.ndemos = 17
+        self.ndemos = 25
         self.obs_dofs = 4
         self.bax_dofs = 7
         self.stdev = 0.005
@@ -74,20 +75,50 @@ class ProMP:
         #     self.start = 1
 
     def reset_right_hand(self):
-        reset_angles = {'right_s0': -0.1902136176977913, 'right_s1': -0.24236896448589537, 'right_w0': 1.6171992456281974, 'right_w1': 0.4966262800779027, 'right_w2': -2.9931800123614134, 'right_e0': 0.9583544972314122, 'right_e1': 1.2133788032173622}
-        reset_angles = init_angles = {'right_s0': -1.469170099597255, 'right_s1': 0.24160197409195266, 'right_w0': -0.2807184841830307, 'right_w1': 0.8364030245945219, 'right_w2': 0.41724277430483253, 'right_e0': 0.5069806503961293, 'right_e1': 1.5500875861582106}
+        # reset_angles = {'right_s0': -0.1902136176977913, 'right_s1': -0.24236896448589537, 'right_w0': 1.6171992456281974, 'right_w1': 0.4966262800779027, 'right_w2': -2.9931800123614134, 'right_e0': 0.9583544972314122, 'right_e1': 1.2133788032173622}
+        # reset_angles = init_angles = {'right_s0': -1.469170099597255, 'right_s1': 0.24160197409195266, 'right_w0': -0.2807184841830307, 'right_w1': 0.8364030245945219, 'right_w2': 0.41724277430483253, 'right_e0': 0.5069806503961293, 'right_e1': 1.5500875861582106}
+        reset_angles = init_angles = {'right_s0': -0.7815632114276183, 'right_s1': 0.2519563444101792, 'right_w0': 1.2072428800658206, 'right_w1': 0.20862138715241627, 'right_w2': 0.5437961893053792, 'right_e0': -0.16528642989465334, 'right_e1': 1.2448254093690132}
         self.limb.move_to_joint_positions(reset_angles,timeout=4.0)
 
+    def to_the_basket(self):
+        basket_angles = {'right_s0': 1.135912773429149, 'right_s1': -0.017640779060682257, 'right_w0': 0.9357282806101024, 'right_w1': 1.2072428800658206, 'right_w2': 0.590199108138913, 'right_e0': -0.22357769983429907, 'right_e1': 1.1416652013837192}
+        self.limb.move_to_joint_positions(basket_angles, timeout=4.0)
+
+    def safe_dist(self):
+        safe_angle = {'right_s0': -1.4442429117941171, 'right_s1': 0.2519563444101792, 'right_w0': 1.2570972556720965, 'right_w1': 0.6197282383057071, 'right_w2': 1.750272078977257, 'right_e0': -0.5530000740326917, 'right_e1': -0.0502378708032473}
+        self.limb.move_to_joint_positions(safe_angle, timeout=2.5)
 
     def test_promp(self):
         '''
         Test ProMP
         '''
         time.sleep(2)
-        self.this_phase = 40
-        self.obs_pose = self.q_data[2][self.this_phase,:3]
-        print self.obs_pose
+        self.this_phase = 98
+        self.obs_pose = self.q_data[18][self.this_phase,:3]
+        print len(self.q_data)
+        print self.q_data[1].shape
         self.runPromp()
+    
+    def replay_motion(self):
+        pass
+        time.sleep(2)
+        self.this_phase = 98
+        promp = np.array(self.q_data[1][self.this_phase,4:11])
+        otp_angles = {'right_s0': promp[0,0], 'right_s1': promp[0,1], 'right_w0': promp[0,4], 'right_w1': promp[0,5], 'right_w2': promp[0,6], 'right_e0': promp[0,2], 'right_e1': promp[0,3]}
+        self.limb.move_to_joint_positions(otp_angles, timeout=2.75)
+
+        # self.obs_pose = self.q_data[1][self.this_phase,4:11]
+        # print self.obs_pose
+        # self.runPromp()
+        
+        # print promp
+        # print self.obs_pose
+        # promp = np.array(promp[4:11])
+
+        # P = Float64MultiArray()
+        # P.data = self.hand
+        # self.goal_pub.publish(P)
+
 
     def callback(self,data):
         # pos = data.poses
@@ -125,7 +156,7 @@ class ProMP:
         e_old = np.linalg.norm(P_old - self.otp_s)
         e_new = np.linalg.norm(P_new - self.otp_s)
         
-        if (((e_old - e_new) > 0.001) and self.start == 1) or self.phase_z > 30:
+        if (((e_old - e_new) > 0.0001) and self.start == 1) or self.phase_z > 30:
             
             if self.count==0:
                 self.t0 = self.D[0,3]
@@ -350,7 +381,7 @@ class ProMP:
         # self.goal_pub.publish(P)
 
         otp_angles = {'right_s0': promp[0], 'right_s1': promp[1], 'right_w0': promp[4], 'right_w1': promp[5], 'right_w2': promp[6], 'right_e0': promp[2], 'right_e1': promp[3]}
-        
+        print otp_angles
         self.limb.move_to_joint_positions(otp_angles,timeout=2.75,threshold=0.05)
         # self.limb.set_joint_positions(otp_angles)
         # if self.phase_z < 50:
@@ -417,7 +448,9 @@ class ProMP:
             obs_data.append(obs[:,:4])
 
         bax, bax_mean = self.addVelocity(bax_data)
+        print 
         obs, obs_mean = self.addVelocity(obs_data)
+
 
         demo_data = []
         for i in range(len(bax)):
@@ -452,6 +485,8 @@ class ProMP:
             for j in range(demo_data[0].shape[1]/2):
                 q.append(demo_data[i][:,2*j])
             demo_q.append(np.matrix(q).T)
+
+        print demo_q[1].shape
 
         print "Data Loaded"
         return demo, demo_q
