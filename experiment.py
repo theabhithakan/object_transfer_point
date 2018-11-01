@@ -5,6 +5,7 @@ import time
 import numpy as np
 from std_msgs.msg import Float64MultiArray
 import baxter_interface
+from handover.msg import skeleton
 import promp
 import move_base
 import head_wobbler
@@ -12,14 +13,38 @@ from reflex_msgs.msg import Command
 
 
 
+# class HumanSaver:
+#     """docstring for HumanSaver"""
+#     def __init__(self, height, arm_length, condition):
+
+#         self.saver = {}
+#         self.saver["height"] = height
+#         self.saver["arm_length"] = arm_length
+#         self.saver["condition"] = condition
+
+
+
+#     def callback(self, data):
+
+#         self.data = data
+
+#         self.saver["otp_x"] = self.data.joints[2].x
+#         self.saver["otp_y"] = self.data.joints[2].y
+#         self.saver["otp_z"] = self.data.joints[2].z
+
+
+
+
+
 def main():
     rospy.init_node("OTP_Experiment", disable_signals=True)
+
     print "init"
     face = head_wobbler.Wobbler()
     base = move_base.MoveBase()
     print "initialized"
     grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
-    obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
+    # obs_sub = rospy.Subscriber("skeleton_data", skeleton, callback, queue_size = 1)
     
     stand_right = promp.ProMP("src/handover/object_transfer_point/data/stand_right")
     # stand_right = promp.ProMP("../scripts/DataICRA19/BaselineB")
@@ -31,7 +56,7 @@ def main():
 
 
     stand_right.reset_right_hand()
-
+    
     take = Command()
     take.pose.f1 = 2.0
     take.pose.f2 = 2.0
@@ -59,13 +84,13 @@ def main():
     # time.sleep(2.0)
 
 
-    face.look_right()
-    stand_right.test_promp()
-    time.sleep(2.0)
-    grasp_pub.publish(take)
-    time.sleep(4.0)
-    stand_right.safe_dist()
-    stand_right.to_the_basket()
+    # face.look_right()
+    # stand_right.runPromp()
+    # time.sleep(2.0)
+    # grasp_pub.publish(take)
+    # time.sleep(4.0)
+    # stand_right.safe_dist()
+    # stand_right.to_the_basket()
     # time.sleep(2.0)
     grasp_pub.publish(drop)
     # time.sleep(2.0)
@@ -83,7 +108,7 @@ def main():
         time.sleep(4.0)
         stand_right.safe_dist()
         stand_right.to_the_basket()
-        # time.sleep(2.0)
+        time.sleep(2.0)
         grasp_pub.publish(drop)
         # time.sleep(2.0)
         face.set_neutral()

@@ -60,14 +60,14 @@ class Saver:
         P_rs = np.array([self.data.joints[0].x, self.data.joints[0].y, self.data.joints[0].z])
         P_ls = np.array([self.data.joints[1].x, self.data.joints[1].y, self.data.joints[1].z])
         P_o = (P_rs + P_ls)/2
-        theta = np.pi - np.arctan2((P_rs[2] - P_ls[2]),(P_rs[0] - P_ls[0]))
-        # print np.rad2deg(theta)
-        self.tf_k2h = np.array([[np.cos(theta), 0, -np.sin(theta), P_o[0]], [0, 1, 0, P_o[1]], [np.sin(theta), 0, np.cos(theta), P_o[2]], [0, 0, 0, 1]])
-        self.tf_h2k = np.linalg.inv(self.tf_k2h)
-        self.otp_point = np.matrix([self.data.joints[2].x, self.data.joints[2].y, self.data.joints[2].z, 1.0])
-        self.otp_point = np.matmul(self.tf_k2h, self.otp_point.T)
-        self.otp_point[3,0] = self.P_rw[0,3]
-        self.P_rw = self.otp_point.T
+        # theta = np.pi - np.arctan2((P_rs[2] - P_ls[2]),(P_rs[0] - P_ls[0]))
+        # # print np.rad2deg(theta)
+        # self.tf_k2h = np.array([[np.cos(theta), 0, -np.sin(theta), P_o[0]], [0, 1, 0, P_o[1]], [np.sin(theta), 0, np.cos(theta), P_o[2]], [0, 0, 0, 1]])
+        # self.tf_h2k = np.linalg.inv(self.tf_k2h)
+        # self.otp_point = np.matrix([self.data.joints[2].x, self.data.joints[2].y, self.data.joints[2].z, 1.0])
+        # self.otp_point = np.matmul(self.tf_k2h, self.otp_point.T)
+        # self.otp_point[3,0] = self.P_rw[0,3]
+        # self.P_rw = self.otp_point.T
         
         #Formatting the sensor data
         self.D = np.append(self.D, self.P_rw, axis=0)
@@ -85,31 +85,31 @@ class Saver:
         count = 0
         while True:
             try:
-                if count==0:
-                    #Extracting wrist and shoulder positions of human and baxter
-                    self.otp_s = np.array([0.0,0.0,0.5])
+                # if count==0:
+                #     #Extracting wrist and shoulder positions of human and baxter
+                #     self.otp_s = np.array([0.0,0.0,0.5])
 
                 #Human wrist position: current and previous
-                P_new = self.D[1, 0:3]
-                P_old = self.D[0, 0:3]
+                # P_new = self.D[1, 0:3]
+                # P_old = self.D[0, 0:3]
 
                 #Distance between current location and goal position
-                e_old = np.linalg.norm(P_old - self.otp_s)
-                e_new = np.linalg.norm(P_new - self.otp_s)
+                # e_old = np.linalg.norm(P_old - self.otp_s)
+                # e_new = np.linalg.norm(P_new - self.otp_s)
                     
 
-                if (e_old - e_new) > 0.0001 or self.start==1:
-                    self.start = 1
-                    print "moving"
-                    if count==0:
-                        self.start_time = time.time()
-                        t0 = self.D[0,3]
-                    human_wrist = np.concatenate((self.D[1,:3],np.matrix([self.D[1,3]-t0])), axis=1)
+                # if (e_old - e_new) > 0.0001 or self.start==1:
+                self.start = 1
+                print "moving"
+                if count==0:
+                    self.start_time = time.time()
+                    t0 = self.D[0,3]
+                human_wrist = np.concatenate((self.D[1,:3],np.matrix([self.D[1,3]-t0])), axis=1)
             
-                    self.demo_baxter_joints = np.concatenate((self.demo_baxter_joints, self.b), axis=0)
-                    self.demo_human_wrist = np.concatenate((self.demo_human_wrist, human_wrist), axis=0)
-                    self.demo_baxter_pos = np.concatenate((self.demo_baxter_pos, self.b_pos), axis=0)
-                    count += 1
+                self.demo_baxter_joints = np.concatenate((self.demo_baxter_joints, self.b), axis=0)
+                self.demo_human_wrist = np.concatenate((self.demo_human_wrist, human_wrist), axis=0)
+                self.demo_baxter_pos = np.concatenate((self.demo_baxter_pos, self.b_pos), axis=0)
+                count += 1
 
             except KeyboardInterrupt:
                 break

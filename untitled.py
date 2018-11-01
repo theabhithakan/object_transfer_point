@@ -21,17 +21,19 @@ class ProMP:
     
     def __init__(self, training_address):
         self.goal_pub = rospy.Publisher("/promp_data", Float64MultiArray, queue_size=1)
+
+        
         self.grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
 
-        self.ndemos = 30
+        self.ndemos = 25
         self.obs_dofs = 4
         self.bax_dofs = 7
         self.stdev = 0.005
         self.D = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.count = 0
-        self.phase_z = 0
+        # self.count = 0
+        # self.phase_z = 0
         self.dt = 0.01
-        self.start = 1
+        # self.start = 0
 
         self.p_data, self.q_data = self.loadData(self.dt, training_address)
         self.promp = self.pmpRegression(self.q_data)
@@ -44,8 +46,8 @@ class ProMP:
         # self.obs_sub = rospy.Subscriber("/objects/3d", PoseArray, self.callback, queue_size=1)
 
         self.limb = baxter_interface.Limb('right')
-        init_angles = {'right_s0': -0.7815632114276183, 'right_s1': 0.2519563444101792, 'right_w0': 1.2072428800658206, 'right_w1': 0.20862138715241627, 'right_w2': 0.5437961893053792, 'right_e0': -0.16528642989465334, 'right_e1': 1.2448254093690132}
-        self.limb.move_to_joint_positions(init_angles,timeout=4.0)
+        # init_angles = {'right_s0': -1.469170099597255, 'right_s1': 0.24160197409195266, 'right_w0': -0.2807184841830307, 'right_w1': 0.8364030245945219, 'right_w2': 0.41724277430483253, 'right_e0': 0.5069806503961293, 'right_e1': 1.5500875861582106}
+        # self.limb.move_to_joint_positions(init_angles,timeout=4.0)
         # print "Trained"
 
         # text = raw_input("Run obstacle avoidance? (Y/n)")
@@ -79,10 +81,6 @@ class ProMP:
         reset_angles = init_angles = {'right_s0': -0.7815632114276183, 'right_s1': 0.2519563444101792, 'right_w0': 1.2072428800658206, 'right_w1': 0.20862138715241627, 'right_w2': 0.5437961893053792, 'right_e0': -0.16528642989465334, 'right_e1': 1.2448254093690132}
         self.limb.move_to_joint_positions(reset_angles,timeout=4.0)
 
-    def reset_left_hand(self):
-        left_angles = {'left_w0': -0.38502917775923884, 'left_w1': 0.06212622190935926, 'left_w2': -1.685077895492127, 'left_e0': 0.019558255045539024, 'left_e1': 1.2486603613387268, 'left_s0': 0.7589369948063085, 'left_s1': 0.3129320807286244}
-        self.left_limb.move_to_joint_positions(left_angles,timeout=4.0)
-
     def to_the_basket(self):
         basket_angles = {'right_s0': 1.135912773429149, 'right_s1': -0.017640779060682257, 'right_w0': 0.9357282806101024, 'right_w1': 1.2072428800658206, 'right_w2': 0.590199108138913, 'right_e0': -0.22357769983429907, 'right_e1': 1.1416652013837192}
         self.limb.move_to_joint_positions(basket_angles, timeout=4.0)
@@ -96,26 +94,19 @@ class ProMP:
         Test ProMP
         '''
         time.sleep(2)
-        # self.this_phase = 98
+        self.this_phase = 98
         self.obs_pose = obs_realtime
         print len(self.q_data)
         print self.q_data[1].shape
         self.runPromp()
-
+    
     def replay_motion(self):
-
+        pass
         time.sleep(2)
         self.this_phase = 98
-        self.obs_pose = self.q_data[2][self.this_phase,0:3]
-        print self.obs_pose
-        self.runPromp()
-
-
-        # time.sleep(2)
-        # self.this_phase = 98
-        # promp = np.array(self.q_data[2][self.this_phase,4:11])
-        # otp_angles = {'right_s0': promp[0,0], 'right_s1': promp[0,1], 'right_w0': promp[0,4], 'right_w1': promp[0,5], 'right_w2': promp[0,6], 'right_e0': promp[0,2], 'right_e1': promp[0,3]}
-        # self.limb.move_to_joint_positions(otp_angles, timeout=2.75)
+        promp = np.array(self.q_data[1][self.this_phase,4:11])
+        otp_angles = {'right_s0': promp[0,0], 'right_s1': promp[0,1], 'right_w0': promp[0,4], 'right_w1': promp[0,5], 'right_w2': promp[0,6], 'right_e0': promp[0,2], 'right_e1': promp[0,3]}
+        self.limb.move_to_joint_positions(otp_angles, timeout=2.75)
 
         # self.obs_pose = self.q_data[1][self.this_phase,4:11]
         # print self.obs_pose
@@ -134,14 +125,14 @@ class ProMP:
         # point = np.array([pos[0].position.x,pos[0].position.y,pos[0].position.z])
         # obs = self.Observation(self.stdev,self.param,self.p_data,point)
         # self.kf = self.kfLoop(self.promp,self.param,obs)
-
+        
         # self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z, float(data.joints[2].stamp)])
-        self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z, data.joints[2].stamp])
+        self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z])
 
         #User-Adaptive Frame
         P_rs = np.array([data.joints[0].x, data.joints[0].y, data.joints[0].z])
         P_ls = np.array([data.joints[1].x, data.joints[1].y, data.joints[1].z])
-        P_o = (P_rs + P_ls)/2
+        # P_o = (P_rs + P_ls)/2
         # theta = np.pi - np.arctan2((P_rs[2] - P_ls[2]),(P_rs[0] - P_ls[0]))
         # # print np.rad2deg(theta)
         # self.tf_k2h = np.array([[np.cos(theta), 0, -np.sin(theta), P_o[0]], [0, 1, 0, P_o[1]], [np.sin(theta), 0, np.cos(theta), P_o[2]], [0, 0, 0, 1]])
@@ -155,50 +146,47 @@ class ProMP:
         self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:]
 
         #Extracting wrist and shoulder positions of human and baxter
-        # self.otp_s = (P_rs+P_ls)/2
-        # self.otp_s[2] = self.otp_s[2]/2
+        self.otp_s = (P_rs+P_ls)/2
+        self.otp_s[2] = self.otp_s[2]/2
 
-        # #Human wrist position: current and previous
-        # P_new = self.D[1, 0:3]
-        # P_old = self.D[0, 0:3]
+        #Human wrist position: current and previous
+        P_new = self.D[1, 0:3]
+        P_old = self.D[0, 0:3]
 
-        # #Distance between current location and goal position
-        # e_old = np.linalg.norm(P_old - self.otp_s)
-        # e_new = np.linalg.norm(P_new - self.otp_s)
+        #Distance between current location and goal position
+        e_old = np.linalg.norm(P_old - self.otp_s)
+        e_new = np.linalg.norm(P_new - self.otp_s)
         
-        # # if (((e_old - e_new) > 0.0001) and self.start == 1) or self.phase_z > 30:
+        if (((e_old - e_new) > 0.0001) and self.start == 1) or self.phase_z > 30:
             
-        # if self.count==0:
-        #     self.t0 = self.D[0,3]
-        #     self.timer_begin = time.time()
-        #     self.count += 1
+            if self.count==0:
+                self.t0 = self.D[0,3]
+                self.timer_begin = time.time()
+                self.count += 1
+            self.phase_t  = self.D[1,3]-self.t0
 
-        
-        # self.phase_t  = self.D[1,3]-self.t0
+            '''
+            Phase Estimation
+            '''
+            t_sum = np.zeros((100,len(self.q_data)))
+            for i in range(0,len(self.q_data)):
+                t_sum[:,i] = self.q_data[i][:,3].T
+            t_mean = t_sum.sum(axis=1)/self.ndemos
 
-        # '''
-        # Phase Estimation
-        # '''
+            self.phase_z = (np.abs(t_mean - self.phase_t)).argmin()
+            print self.phase_z
 
-        # t_sum = np.zeros((100,len(self.q_data)))
-        # for i in range(0,len(self.q_data)):
-        #     t_sum[:,i] = self.q_data[i][:,3].T
-        # t_mean = t_sum.sum(axis=1)/self.ndemos
-        # self.phase_z = (np.abs(t_mean - self.phase_t)).argmin()
-        # print self.phase_z
+        # if 1 <= self.phase_z and self.phase_z < 50:
+        #     self.moveBaxter()   
 
-        # # if 1 <= self.phase_z and self.phase_z < 50:
-        # #     self.moveBaxter()   
+        if 10 <= self.phase_z and self.phase_z <= 60:
+            self.this_phase = self.phase_z
+            print self.phase_z
+            self.runPromp()
 
-        # # if 10 <= self.phase_z and self.phase_z <= 60:
-        #     # self.this_phase = self.phase_z
-        #     # print self.phase_z
-        
-        # self.runPromp()
-
-        # # if self.phase_z > 90:
-        # error = self.D[1,0:3] - self.hand
-        # error = np.linalg.norm(error)
+        if self.phase_z > 90:
+            error = self.D[1,0:3] - self.hand
+            error = np.linalg.norm(error)
             # print 'error is', error
 
     # def moveBaxter(self):
@@ -277,10 +265,9 @@ class ProMP:
         '''
         ProMP Estimation
         '''
-        self.obs_pose = self.D[1,:3]
-        print self.obs_pose
+        # self.obs_pose = self.D[1,:3]
         param = {"nTraj":self.p_data["size"], "nTotalJoints":self.promp["nJoints"], "observedJointPos":np.array([0,1,2]), "observedJointVel":np.array([])}
-        obs = self.Observation(self.stdev,param,self.p_data,self.obs_pose)
+        obs = self.Observation(self.stdev,param,self.p_data,self.obs_pose,[self.this_phase])
         self.kf = self.kfLoop(self.promp,param,obs)
 
         print "sliced"
@@ -637,11 +624,11 @@ class ProMP:
 
         return weight
 
-    def Observation(self,stdev,param,p_data,obs_data):
+    def Observation(self,stdev,param,p_data,obs_data,observed_data_index=[99]):
         obs = {"joint":param["observedJointPos"], "jointvel":param["observedJointVel"], "stdev":stdev}
         obs["q"] = np.zeros((param["nTotalJoints"],param["nTraj"]))
         obs["qdot"] = np.zeros((param["nTotalJoints"],param["nTraj"]))
-        obs["index"] = [99]
+        obs["index"] = observed_data_index
 
         for i in obs["joint"]:
             obs["q"][i,obs["index"]] = obs_data[0,i]
