@@ -25,7 +25,7 @@ class MoveBase:
         base.angular.z = -0.2
         rate = 30
         r = rospy.Rate(rate)
-        stop = 3.0
+        stop = 3.25
         while time.time()-start < stop:
             self.move_base.publish(base)
             r.sleep()
@@ -37,7 +37,7 @@ class MoveBase:
         base.angular.z = 0.2
         rate = 30
         r = rospy.Rate(rate)
-        stop = 3.0
+        stop = 3.25
         while time.time()-start < stop:
             self.move_base.publish(base)
             r.sleep()

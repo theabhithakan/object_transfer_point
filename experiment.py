@@ -22,6 +22,11 @@ class HumanSaver:
         self.saver["height"] = height
         self.saver["arm_length"] = arm_length
         self.saver["condition"] = condition
+        # self.P_rs = np.array()
+        # self.P_ls = np.array()
+        # self.P_rw = np.array()
+        # self.P_lw = np.array()
+        # self.P_h = np.array()
 
     def callback(self,data):
         self.P_rs = np.array([data.joints[0].x, data.joints[0].y, data.joints[0].z])
@@ -48,7 +53,7 @@ def main():
     time.sleep(2.0)
     hs.pointingDirection()
     
-    stand_right = promp.ProMP("src/handover/object_transfer_point/data/stand_right")
+    # stand_right = promp.ProMP("src/handover/object_transfer_point/data/stand_right")
     # stand_right = promp.ProMP("../scripts/DataICRA19/BaselineB")
     # stand_front = promp.ProMP("../scripts/DataICRA19/BaselineB")
     # stand_back = promp.ProMP("../scripts/DataICRA19/BaselineB")
