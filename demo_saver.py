@@ -32,8 +32,7 @@ class Saver:
         self.right_limb.move_to_joint_positions(init_angles,5)
 
         # Subscribing to the skeleton data from kinect
-        self.data_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback1, queue_size = 1)
-
+        self.data_sub = rospy.Subscriber("/skeleton_data", skeleton, self.callback1, queue_size = 1)
         # Subscribing to object grasp points data
         # self.data_sub = rospy.Subscriber("/objects/3d", PoseArray, self.callback2, queue_size = 1)
 
@@ -46,7 +45,6 @@ class Saver:
             self.rec()
 
     def callback1(self,data):
-
         self.data = data
     
         #Sorting skeleton data
@@ -71,7 +69,7 @@ class Saver:
         
         #Formatting the sensor data
         self.D = np.append(self.D, self.P_rw, axis=0)
-        self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:]
+        self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:] 
 
         #Saving variables
         baxarm_angles = self.right_limb.joint_angles()
@@ -129,9 +127,9 @@ class Saver:
             self.ndemos_baxter_pos.append(self.demo_baxter_pos[1:,:])
             # self.ndemos_time.append(self.timer)
 
-        np.savetxt("src/handover/object_transfer_point/data/stand_front/demo_baxter_" + str(self.i) + ".csv", self.demo_baxter_joints[1:], delimiter=",")
-        np.savetxt("src/handover/object_transfer_point/data/stand_front/demo_human_" + str(self.i) + ".csv", self.demo_human_wrist[1:,:], delimiter=",")
-        np.savetxt("src/handover/object_transfer_point/data/stand_front/demo_pos_" + str(self.i) + ".csv", self.demo_baxter_pos[1:,:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_back/demo_baxter_" + str(self.i) + ".csv", self.demo_baxter_joints[1:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_back/demo_human_" + str(self.i) + ".csv", self.demo_human_wrist[1:,:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_back/demo_pos_" + str(self.i) + ".csv", self.demo_baxter_pos[1:,:], delimiter=",")
 
         time.sleep(1)
 
@@ -148,9 +146,9 @@ class Saver:
             # self.start_time = time.time()
             self.rec()
 
-        sio.savemat('src/handover/object_transfer_point/data/stand_front/demo_baxter.mat',{'baxter_demo_data':self.ndemos_baxter_joints})
-        sio.savemat('src/handover/object_transfer_point/data/stand_front/demo_baxter_pos.mat',{'baxter_demo_pos_data':self.ndemos_baxter_pos})
-        sio.savemat('src/handover/object_transfer_point/data/stand_front/demo_human.mat',{'human_demo_data':self.ndemos_human_wrist})
+        sio.savemat('src/handover/object_transfer_point/data/sit_back/demo_baxter.mat',{'baxter_demo_data':self.ndemos_baxter_joints})
+        sio.savemat('src/handover/object_transfer_point/data/sit_back/demo_baxter_pos.mat',{'baxter_demo_pos_data':self.ndemos_baxter_pos})
+        sio.savemat('src/handover/object_transfer_point/data/sit_back/demo_human.mat',{'human_demo_data':self.ndemos_human_wrist})
         # sio.savemat('src/handover/scripts/DataICRA19/demo_time.mat',{'time':self.ndemos_time})
         
     def callback2(self,data):

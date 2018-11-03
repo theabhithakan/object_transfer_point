@@ -9,7 +9,7 @@ from handover.msg import skeleton
 
 class MotionStudy:
 
-    def __init__(self):     
+    def __init__(self):
 
         #Subscribing to the skeleton data from kinect
         self.data_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
