@@ -20,14 +20,11 @@ class ProMP:
     '''
     
     def __init__(self, training_address):
-        self.goal_pub = rospy.Publisher("/promp_data", Float64MultiArray, queue_size=1)
-        self.grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
 
         self.ndemos = 30
         self.obs_dofs = 4
         self.bax_dofs = 7
         self.stdev = 0.005
-        self.D = np.matrix([0.0, 0.0, 0.0, 0.0])
         self.count = 0
         self.phase_z = 0
         self.dt = 0.01
@@ -47,31 +44,6 @@ class ProMP:
         init_angles = {'right_s0': -0.7815632114276183, 'right_s1': 0.2519563444101792, 'right_w0': 1.2072428800658206, 'right_w1': 0.20862138715241627, 'right_w2': 0.5437961893053792, 'right_e0': -0.16528642989465334, 'right_e1': 1.2448254093690132}
         self.limb.move_to_joint_positions(init_angles,timeout=4.0)
         # print "Trained"
-
-        # text = raw_input("Run obstacle avoidance? (Y/n)")
-        # if text  == 'n':
-        #     print "Hmm Adventurous..."
-        # else:
-        #     self.obstacleAvoidance()
-
-        # grip = Command()
-        # grip.pose.f1 = 0.0
-        # grip.pose.f2 = 0.0
-        # grip.pose.f3 = -2.0
-        # grip.pose.preshape = 0.0
-        # grip.velocity.f1 = 2.0
-        # grip.velocity.f2 = 2.0
-        # grip.velocity.f3 = 2.0
-        # grip.velocity.preshape = 2.0
-        # self.grasp_pub.publish(grip)
-
-        # text = raw_input("Run ProMP? (Y/n)")
-        # if text  == 'n':
-        #     print "Alright. Not moving."
-        # else:
-        #     time.sleep(1)
-        #     print "GOOOO!"
-        #     self.start = 1
 
     def reset_right_hand(self):
         # reset_angles = {'right_s0': -0.1902136176977913, 'right_s1': -0.24236896448589537, 'right_w0': 1.6171992456281974, 'right_w1': 0.4966262800779027, 'right_w2': -2.9931800123614134, 'right_e0': 0.9583544972314122, 'right_e1': 1.2133788032173622}
@@ -129,19 +101,19 @@ class ProMP:
         # P.data = self.hand
         # self.goal_pub.publish(P)
 
-    def callback(self,data):
+    # def callback(self,data):
         # pos = data.poses
         # point = np.array([pos[0].position.x,pos[0].position.y,pos[0].position.z])
         # obs = self.Observation(self.stdev,self.param,self.p_data,point)
         # self.kf = self.kfLoop(self.promp,self.param,obs)
 
         # self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z, float(data.joints[2].stamp)])
-        self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z, data.joints[2].stamp])
+        # self.P_rw = np.matrix([data.joints[2].x, data.joints[2].y, data.joints[2].z, data.joints[2].stamp])
 
         #User-Adaptive Frame
-        P_rs = np.array([data.joints[0].x, data.joints[0].y, data.joints[0].z])
-        P_ls = np.array([data.joints[1].x, data.joints[1].y, data.joints[1].z])
-        P_o = (P_rs + P_ls)/2
+        # P_rs = np.array([data.joints[0].x, data.joints[0].y, data.joints[0].z])
+        # P_ls = np.array([data.joints[1].x, data.joints[1].y, data.joints[1].z])
+        # P_o = (P_rs + P_ls)/2
         # theta = np.pi - np.arctan2((P_rs[2] - P_ls[2]),(P_rs[0] - P_ls[0]))
         # # print np.rad2deg(theta)
         # self.tf_k2h = np.array([[np.cos(theta), 0, -np.sin(theta), P_o[0]], [0, 1, 0, P_o[1]], [np.sin(theta), 0, np.cos(theta), P_o[2]], [0, 0, 0, 1]])
@@ -151,8 +123,8 @@ class ProMP:
         # self.otp_point[3,0] = self.P_rw[0,3]
         # self.P_rw = self.otp_point.T
 
-        self.D = np.append(self.D, self.P_rw, axis=0)
-        self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:]
+        # self.D = np.append(self.D, self.P_rw, axis=0)
+        # self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:]
 
         #Extracting wrist and shoulder positions of human and baxter
         # self.otp_s = (P_rs+P_ls)/2
@@ -209,248 +181,31 @@ class ProMP:
     #     # print 'time is', elapsed_time
     #     self.hand = np.matrix([0.06,0.002,0.57])
 
-    # def obstacleAvoidance(self):
-    #     t_o = 70
-    #     nJoints = self.promp["w"]["nJoints"]
-    #     w0, b = [], []
-    #     for i in range(nJoints):
-    #         w0.append(self.kf["w_mean"][i])
-    #         b.append(self.kf["q_sigma_ii"][i][t_o])
-    #     self.w0 = np.matrix(np.array(w0)).T
-    #     self.b_std = np.matrix(np.array(b))
-    #     self.base = self.promp["basis"]["Gn"][t_o]
 
-    #     bnd = (-30,30)
-    #     Bnd = (bnd,)*300
-    #     con1 = {'type': 'eq', 'fun': self.constraint1}
-    #     con2 = {'type': 'ineq', 'fun': self.constraint2}
-    #     cons = [con1,con2]
-
-    #     sol = minimize(self.objective, w0, method='SLSQP', bounds=Bnd, constraints=cons)
-
-    #     w = sol["x"]
-    #     w = np.matrix([w[:30],w[30:60],w[60:90],w[90:120],w[120:150],w[150:180],w[180:210],w[210:240],w[240:270],w[270:300]])
-    #     y_new = w*self.promp["basis"]["Gn"].T
-
-    #     # for i in range(nJoints):
-    #     #     self.kf["q_mean"][i] = y_new[i]
-
-    #     traj_plot = np.empty((0,7),dtype=float)
-    #     for j in range(y_new.shape[1]):
-    #         promp = []
-    #         for i in range(y_new.shape[0]):
-    #                 promp.append(y_new[i,j])
-    #         promp = np.array(promp[3:10])
-    #         print promp.shape
-    #         print np.matrix(promp).shape
-
-    #         traj_plot = np.append(traj_plot,np.matrix(promp),axis=0)
-
-    #     np.savetxt("../scripts/traj1.csv", traj_plot, delimiter=",")
-
-    # def objective(self,w):
-    #     w = np.matrix([w[:30],w[30:60],w[60:90],w[90:120],w[120:150],w[150:180],w[180:210],w[210:240],w[240:270],w[270:300]]).T
-    #     # o = np.matmul((w-w_mean).T,(w-w_mean))
-    #     o = np.linalg.norm(w - self.w0)**2
-    #     return o
-
-    # def constraint1(self,w):
-    #     y_o = np.array([0.6,-0.5,0.2])
-    #     D = np.array([0.15,0.15,0.15])
-    #     w = np.matrix([w[:30],w[30:60],w[60:90],w[90:120],w[120:150],w[150:180],w[180:210],w[210:240],w[240:270],w[270:300]])
-    #     # c1 = ((y - basis.T*w).T * M * (y - basis.T*w)) - D**2
-    #     y_w = w*self.base.T
-    #     c1 = np.linalg.norm(y_o[0:3] - y_w[0:3] - D)**2
-    #     return c1
-
-    # def constraint2(self,w):
-    #     w = np.matrix([w[:30],w[30:60],w[60:90],w[90:120],w[120:150],w[150:180],w[180:210],w[210:240],w[240:270],w[270:300]])
-    #     x = w*self.base.T
-    #     y = self.base*self.w0
-    #     z = np.linalg.inv(np.cov(self.w0.T))
-    #     mb = mahalanobis(x,y,z)
-    #     c2 = np.linalg.norm(self.b_std - mb)**2
-    #     return c2
-
-    def runPromp(self):
+    def runPromp(self, ):
 
         '''
         ProMP Estimation
         '''
-        self.obs_pose = self.D[1,:3]
-        print self.obs_pose
+        # obs_pose = self.D[1,:3]
+        # print obs_pose
         param = {"nTraj":self.p_data["size"], "nTotalJoints":self.promp["nJoints"], "observedJointPos":np.array([0,1,2]), "observedJointVel":np.array([])}
-        obs = self.Observation(self.stdev,param,self.p_data,self.obs_pose)
+        obs = self.Observation(self.stdev,param,self.p_data,obs_pose)
         self.kf = self.kfLoop(self.promp,param,obs)
 
-        print "sliced"
-
-        ''' 
-        OBJECT GRASPING CODE
-        '''
-        # grip = Command()
-        # grip.pose.f1 = 0.0
-        # grip.pose.f2 = 0.0
-        # grip.pose.f3 = 0.0
-        # grip.pose.preshape = 0.0
-        # grip.velocity.f1 = 2.0
-        # grip.velocity.f2 = 2.0
-        # grip.velocity.f3 = 2.0
-        # grip.velocity.preshape = 2.0
-        # self.grasp_pub.publish(grip)
         
-        # r = rospy.Rate(7)
-        # traj_plot = np.empty((0,7),dtype=float)
-        # for j in range(len(self.kf["q_mean"][3])):
-        #     promp = []
-        #     for i in range(len(self.kf["q_mean"])):
-        #             promp.append(self.kf["q_mean"][i][j])
-        #     promp = np.array(promp[3:10])
-
-        #     traj_plot = np.append(traj_plot,np.matrix(promp),axis=0)
-
-        #     P = Float64MultiArray()
-        #     P.data = np.array(promp)
-        #     self.goal_pub.publish(P)
-        #     r.sleep()
-
-        # np.savetxt("../scripts/traj2.csv", traj_plot, delimiter=",")
-
-        # t = time.time()
-        # tt = 0
-        # r2 = rospy.Rate(7)
-        # while tt < 1:
-        #     self.goal_pub.publish(P)
-        #     tt = time.time() - t
-        #     r2.sleep()
-
-
-        # text = raw_input("Grab bottle? (Y/n)")
-        # if text  == 'n':
-        #     print "Ok. Going back."
-        # else:
-        #     grip.pose.f1 = 2.0
-        #     grip.pose.f2 = 2.0
-        #     grip.pose.f3 = 2.0
-        #     grip.pose.preshape = 0.0
-        #     grip.velocity.f1 = 2.0
-        #     grip.velocity.f2 = 2.0
-        #     grip.velocity.f3 = 2.0
-        #     grip.velocity.preshape = 2.0
-
-        #     self.grasp_pub.publish(grip)
-        #     time.sleep(2.0)
-
-        #     text = raw_input("Give to human? (Y/n)")
-        #     if text  == 'n':
-        #         print "Ok. Going back."
-        #     else:
-        #         otp = {'right_s0': 0.6507913492603867, 'right_s1': -0.19941750242510378, 'right_w0': 1.992257548266181, 'right_w1': 0.043334957257762936, 'right_w2': -3.008136325043296, 'right_e0': 1.0496263541105944, 'right_e1': 0.4855049193657335}
-        #         self.limb.move_to_joint_positions(otp,timeout=2.0)
-
-        #         grip.pose.f1 = 0.0
-        #         grip.pose.f2 = 0.0
-        #         grip.pose.f3 = 0.0
-        #         grip.pose.preshape = 0.0
-        #         grip.velocity.f1 = 2.0
-        #         grip.velocity.f2 = 2.0
-        #         grip.velocity.f3 = 2.0
-        #         grip.velocity.preshape = 2.0
-
-        #         self.grasp_pub.publish(grip)
-        #         time.sleep(2.0)
-
-        # goback = {'right_s0': -0.1902136176977913, 'right_s1': -0.24236896448589537, 'right_w0': 1.6171992456281974, 'right_w1': 0.4966262800779027, 'right_w2': -2.9931800123614134, 'right_e0': 0.9583544972314122, 'right_e1': 1.2133788032173622}
-        # self.limb.move_to_joint_positions(goback,timeout=2.0)
-    
         '''
         Populate data for publishing
         '''
-        # promp = []
-        # for i in range(len(self.kf["q_mean"])):
-        #         promp.append(self.kf["q_mean"][i][98])
-        # self.hand = np.array(promp[0:3])
-        # promp = np.array(promp[4:11])
-
-        # W = (((self.this_phase/100.0)-1)**3 + 1)
-        # # self.off_otp = np.matrix([0.0505,0.0837,0.54])
-        # print self.hand
-        # self.obs_pose = W*self.hand+ (1-W)*self.otp_s #self.off_otp 
-        # print self.obs_pose
-        # param = {"nTraj":self.p_data["size"], "nTotalJoints":self.promp["nJoints"], "observedJointPos":np.array([0,1,2]), "observedJointVel":np.array([])}
-        # obs = self.Observation(self.stdev,param,self.p_data,self.obs_pose,[98])
-        # self.kf = self.kfLoop(self.promp,param,obs)
 
         promp = []
         for i in range(len(self.kf["q_mean"])):
                 promp.append(self.kf["q_mean"][i][98])
-
-        self.hand = np.array(promp[0:3])
-        # print "otp_s is", self.otp_s 
-        print "promp estimate is", self.hand
         promp = np.array(promp[4:11])
 
-        # P = Float64MultiArray()
-        # P.data = self.hand
-        # self.goal_pub.publish(P)
-
         otp_angles = {'right_s0': promp[0], 'right_s1': promp[1], 'right_w0': promp[4], 'right_w1': promp[5], 'right_w2': promp[6], 'right_e0': promp[2], 'right_e1': promp[3]}
-        print otp_angles
-        self.limb.move_to_joint_positions(otp_angles,timeout=2.75,threshold=0.05)
-        # self.limb.set_joint_positions(otp_angles)
-        # if self.phase_z < 50:
-        #     self.limb.set_joint_positions(otp_angles)
-        #     grip = Command()
-        #     grip.pose.f1 = 0.0
-        #     grip.pose.f2 = 0.0
-        #     grip.pose.f3 = 0.0
-        #     grip.pose.preshape = 0.0
-        #     grip.velocity.f1 = 2.0
-        #     grip.velocity.f2 = 2.0
-        #     grip.velocity.f3 = 2.0
-        #     grip.velocity.preshape = 2.0
-        #     self.grasp_pub.publish(grip)
-        # # elif self.phase_z<90:
-        # #     self.limb.set_joint_positions(otp_angles)
-        # else:
-        #     self.limb.move_to_joint_positions(otp_angles,timeout=2.75,threshold=0.05)
-            # grip = Command()
-            # grip.pose.f1 = 2.0
-            # grip.pose.f2 = 2.0
-            # grip.pose.f3 = 2.0
-            # grip.pose.preshape = 0.0
-            # grip.velocity.f1 = 2.0
-            # grip.velocity.f2 = 2.0
-            # grip.velocity.f3 = 2.0
-            # grip.velocity.preshape = 2.0
-            # self.grasp_pub.publish(grip)
-            # time.sleep(2.0)
 
-        # elapsed_time = time.time() - self.timer_begin
-        # print 'time is', elapsed_time
-
-        # self.goal_pub.publish(P)
-
-        # text = raw_input("Restart motion? (Y/n)")
-        # if text  == 'n':
-        #     print "Ok. Not moving."
-        # else:
-        #     init_angles = {'right_s0': -1.6889128474618404, 'right_s1': 0.6412039693361029, 'right_w0': -0.1392087565006013, 'right_w1': 0.006519418348513008, 'right_w2': -3.0464858447404315, 'right_e0': 0.5829126993964572, 'right_e1': 1.0737865515197895}
-        #     self.limb.move_to_joint_positions(init_angles,timeout=2.0)
-
-        # text = raw_input("Run ProMP again? (Y/n)")
-        # if text  == 'n':
-        #     print "Ok. Not moving."
-        # else:
-        #     self.runPromp()
-
-        '''
-        GRASPING
-        '''
-        # if phase_z > 90:
-        #     self.start = 0
-
-        #     self.limb.move_to_joint_positions(init_angles)
+        return otp_angles
 
 
     def loadData(self,dt,training_address):
