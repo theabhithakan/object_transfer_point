@@ -31,12 +31,14 @@ class HumanSaver:
 
         self.saver = {}
         self.P_rw = []
-        self.saver["stand_right"] = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.saver["stand_front"] = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.saver["stand_back"] = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.saver["sit_right"] = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.saver["sit_front"] = np.matrix([0.0, 0.0, 0.0, 0.0])
-        self.saver["sit_back"] = np.matrix([0.0, 0.0, 0.0, 0.0])
+        self.saver["stand_right"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["stand_front"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["stand_back"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["sit_right"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["sit_front"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["sit_back"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.demo_human_wrist = np.matrix([0.0, 0.0, 0.0, 0.0])
+        self.D = np.matrix([0.0, 0.0, 0.0, 0.0])
         # self.obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
 
         # self.P_rs = np.array()
@@ -61,6 +63,59 @@ class HumanSaver:
         self.P_lw = [data.joints[3].x, data.joints[3].y, data.joints[3].z]
         self.P_h = [data.joints[4].x, data.joints[4].y, data.joints[4].z]
 
+    def traj_saver(self, condition):
+        while True:
+            try:
+                # if count==0:
+                #     #Extracting wrist and shoulder positions of human and baxter
+                #     self.otp_s = np.array([0.0,0.0,0.5])
+
+                #Human wrist position: current and previous
+                # P_new = self.D[1, 0:3]
+                # P_old = self.D[0, 0:3]
+
+                #Distance between current location and goal position
+                # e_old = np.linalg.norm(P_old - self.otp_s)
+                # e_new = np.linalg.norm(P_new - self.otp_s)
+
+                # if (e_old - e_new) > 0.0001 or self.start==1:
+                
+                if count==0:
+                    self.start_time = time.time()
+                    t0 = self.D[0,3]
+                human_wrist = np.concatenate((self.D[1,:3],np.matrix([self.D[1,3]-t0])), axis=1)
+            
+                self.demo_baxter_joints = np.concatenate((self.demo_baxter_joints, self.b), axis=0)
+                self.demo_human_wrist = np.concatenate((self.demo_human_wrist, human_wrist), axis=0)
+                self.demo_baxter_pos = np.concatenate((self.demo_baxter_pos, self.b_pos), axis=0)
+                count += 1
+
+            except KeyboardInterrupt:
+                break
+
+        # self.i += 1
+        # self.demo_human_wrist[:,3] = np.cumsum(np.squeeze(self.demo_human_wrist[:,3])).T
+        # self.timer = time.time() - self.start_time
+
+        if self.i == 1:
+            self.ndemos_baxter_joints = [self.demo_baxter_joints[1:,:]]
+            self.ndemos_human_wrist = [self.demo_human_wrist[1:,:]]
+            self.ndemos_baxter_pos = [self.demo_baxter_pos[1:,:]]
+            # self.ndemos_time = [self.timer]
+        else:
+            self.ndemos_baxter_joints.append(self.demo_baxter_joints[1:,:])
+            self.ndemos_human_wrist.append(self.demo_human_wrist[1:,:])
+            self.ndemos_baxter_pos.append(self.demo_baxter_pos[1:,:])
+            # self.ndemos_time.append(self.timer)
+
+        np.savetxt("src/handover/object_transfer_point/data/subjects/human_wrist_" + str(self.subject) + ".csv", self.demo_human_wrist, delimiter=",")
+        # np.savetxt("src/handover/object_transfer_point/data/subjects/human_wrist" + str(self.i) + ".csv", self.demo_baxter_joints[1:], delimiter=",")
+        # np.savetxt("src/handover/object_transfer_point/data/subjects/human_wrist" + str(self.i) + ".csv", self.demo_baxter_pos[1:,:], delimiter=",")
+
+        sio.savemat("src/handover/object_transfer_point/data/subjects/human_wrist_" + str(self.subject) + ".mat",{'human_demo_data':self.demo_human_wrist})
+        # sio.savemat('src/handover/object_transfer_point/data/subjects/human_wrist.mat',{'baxter_demo_data':self.ndemos_baxter_joints})
+        # sio.savemat('src/handover/object_transfer_point/data/subjects/human_wrist.mat',{'baxter_demo_pos_data':self.ndemos_baxter_pos})
+        # sio.savemat('src/handover/scripts/DataICRA19/demo_time.mat',{'time':self.ndemos_time})
 
 
 
@@ -137,25 +192,25 @@ def main():
         print "ok bye"
     else:
         hs.saver["stand_right"] = [hs.height, hs.arm_length, hs.P_rw[0], hs.P_rw[1], hs.P_rw[2]]
-    #     obs_realtime = [[hs.saver["stand_right"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-    #     face.look_right()
-    #     stand_right.test_promp(obs_realtime)
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(take)
-    #     time.sleep(4.0)
-    #     stand_right.safe_right_dist()
-    #     stand_right.to_the_basket()
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(drop)
-    #     # time.sleep(2.0)
-    #     face.set_neutral()
-    #     stand_right.reset_right_hand()
+        obs_realtime = [[hs.saver["stand_right"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
+        face.look_right()
+        stand_right.test_promp(obs_realtime)
+        time.sleep(2.0)
+        grasp_pub.publish(take)
+        time.sleep(4.0)
+        stand_right.safe_right_dist()
+        stand_right.to_the_basket()
+        time.sleep(2.0)
+        grasp_pub.publish(drop)
+        # time.sleep(2.0)
+        face.set_neutral()
+        stand_right.reset_right_hand()
 
-    # text = raw_input("Safe to rotate? (y/n)")
-    # if text == 'n':
-    #     print "ok bye"
-    # else:
-    #     base.move_right()
+    text = raw_input("Safe to rotate? (y/n)")
+    if text == 'n':
+        print "ok bye"
+    else:
+        base.move_right()
 
     text = raw_input("Start 2nd case? (y/n)")
     if text == 'n':
@@ -179,86 +234,86 @@ def main():
     else:
         hs.saver["stand_back"] = [hs.height, hs.arm_length, hs.P_rw[0], hs.P_rw[1], hs.P_rw[2]]
         obs_realtime = [[hs.saver["stand_back"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-    #     stand_back.test_promp(obs_realtime)
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(take)
-    #     time.sleep(2.0)
-    #     stand_back.reset_right_hand()
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(drop)
-    #     time.sleep(2.0)
+        stand_back.test_promp(obs_realtime)
+        time.sleep(2.0)
+        grasp_pub.publish(take)
+        time.sleep(2.0)
+        stand_back.reset_right_hand()
+        time.sleep(2.0)
+        grasp_pub.publish(drop)
+        time.sleep(2.0)
 
-    # text = raw_input("Safe to rotate? (y/n)")
-    # if text == 'n':
-    #     print "ok bye"
-    # else:
-    #     base.move_left()
+    text = raw_input("Safe to rotate? (y/n)")
+    if text == 'n':
+        print "ok bye"
+    else:
+        base.move_left()
     
-    # text = raw_input("Safe to rotate? (y/n)")
-    # if text == 'n':
-    #     print "ok bye"
-    # else:
-    #     base.move_left()
+    text = raw_input("Safe to rotate? (y/n)")
+    if text == 'n':
+        print "ok bye"
+    else:
+        base.move_left()
 
-    # text = raw_input("Safe to rotate? (y/n)")
-    # if text == 'n':
-    #     print "ok bye"
-    # else:
-    #     base.move_left()
+    text = raw_input("Safe to rotate? (y/n)")
+    if text == 'n':
+        print "ok bye"
+    else:
+        base.move_left()
 
     text = raw_input("Start 4th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
         hs.saver["sit_right"] = [hs.height, hs.arm_length, hs.P_rw[0], hs.P_rw[1], hs.P_rw[2]]
-    #    obs_realtime = [[hs.saver["sit_right"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-    #     face.look_right()
-    #     sit_right.test_promp(obs_realtime)
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(take)
-    #     time.sleep(2.0)
-    #     sit_right.reset_right_hand()
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(drop)
-    #     time.sleep(2.0)
-    #     face.set_neutral()
-    #     base.move_right()
+       obs_realtime = [[hs.saver["sit_right"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
+        face.look_right()
+        sit_right.test_promp(obs_realtime)
+        time.sleep(2.0)
+        grasp_pub.publish(take)
+        time.sleep(2.0)
+        sit_right.reset_right_hand()
+        time.sleep(2.0)
+        grasp_pub.publish(drop)
+        time.sleep(2.0)
+        face.set_neutral()
+        base.move_right()
     
     text = raw_input("Start 5th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
         hs.saver["sit_front"] = [hs.height, hs.arm_length, hs.P_rw[0], hs.P_rw[1], hs.P_rw[2]]
-        # obs_realtime = [[hs.saver["sit_front"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-    #     sit_front.test_promp(obs_realtime)
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(take)
-    #     time.sleep(2.0)
-    #     sit_front.reset_right_hand()
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(drop)
-    #     time.sleep(2.0)
+        obs_realtime = [[hs.saver["sit_front"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
+        sit_front.test_promp(obs_realtime)
+        time.sleep(2.0)
+        grasp_pub.publish(take)
+        time.sleep(2.0)
+        sit_front.reset_right_hand()
+        time.sleep(2.0)
+        grasp_pub.publish(drop)
+        time.sleep(2.0)
 
     text = raw_input("Start 6th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
         hs.saver["sit_back"] = [hs.height, hs.arm_length, hs.P_rw[0], hs.P_rw[1], hs.P_rw[2]]
-    #     obs_realtime = [[hs.saver["sit_back"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-    #     sit_back.test_promp(obs_realtime)
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(take)
-    #     time.sleep(2.0)
-    #     sit_back.reset_right_hand()
-    #     time.sleep(2.0)
-    #     grasp_pub.publish(drop)
-    #     time.sleep(2.0)
+        obs_realtime = [[hs.saver["sit_back"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
+        sit_back.test_promp(obs_realtime)
+        time.sleep(2.0)
+        grasp_pub.publish(take)
+        time.sleep(2.0)
+        sit_back.reset_right_hand()
+        time.sleep(2.0)
+        grasp_pub.publish(drop)
+        time.sleep(2.0)
 
-    # text = raw_input("Safe to rotate? (y/n)")
-    # if text == 'n':
-    #     print "ok bye"
-    # else:
-    #     base.move_right()
+    text = raw_input("Safe to rotate? (y/n)")
+    if text == 'n':
+        print "ok bye"
+    else:
+        base.move_right()
 
     with open("src/handover/object_transfer_point/data/subjects/human" + str(hs.subject), "wb") as f:
         pickle.dump(hs.saver, f)

@@ -92,7 +92,6 @@ class ProMP:
         otp_angles = self.runPromp()
         # self.limb.move_to_joint_positions(otp_angles, timeout=4.0)
 
-
         # time.sleep(2)
         # self.this_phase = 98
         # promp = np.array(self.q_data[2][self.this_phase,4:11])

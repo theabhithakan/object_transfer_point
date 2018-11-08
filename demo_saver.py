@@ -66,7 +66,7 @@ class Saver:
         # self.otp_point = np.matmul(self.tf_k2h, self.otp_point.T)
         # self.otp_point[3,0] = self.P_rw[0,3]
         # self.P_rw = self.otp_point.T
-        
+
         #Formatting the sensor data
         self.D = np.append(self.D, self.P_rw, axis=0)
         self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:] 
@@ -94,7 +94,6 @@ class Saver:
                 #Distance between current location and goal position
                 # e_old = np.linalg.norm(P_old - self.otp_s)
                 # e_new = np.linalg.norm(P_new - self.otp_s)
-                    
 
                 # if (e_old - e_new) > 0.0001 or self.start==1:
                 self.start = 1
