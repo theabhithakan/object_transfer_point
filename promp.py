@@ -37,12 +37,17 @@ class ProMP:
         print "Initialized"
 
         # Subscribe to observed data
-        self.obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
+        # self.obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
         # self.obs_sub = rospy.Subscriber("/objects/3d", PoseArray, self.callback, queue_size=1)
 
         self.limb = baxter_interface.Limb('right')
         init_angles = {'right_s0': -0.7815632114276183, 'right_s1': 0.2519563444101792, 'right_w0': 1.2072428800658206, 'right_w1': 0.20862138715241627, 'right_w2': 0.5437961893053792, 'right_e0': -0.16528642989465334, 'right_e1': 1.2448254093690132}
         self.limb.move_to_joint_positions(init_angles,timeout=4.0)
+
+        self.left_limb = baxter_interface.Limb('left')
+        left_angles = {'left_w0': -0.38502917775923884, 'left_w1': 0.06212622190935926, 'left_w2': -1.685077895492127, 'left_e0': 0.019558255045539024, 'left_e1': 1.2486603613387268, 'left_s0': 0.7589369948063085, 'left_s1': 0.3129320807286244}
+        self.left_limb.move_to_joint_positions(left_angles,5)
+
         # print "Trained"
 
     def reset_right_hand(self):
@@ -56,22 +61,26 @@ class ProMP:
         self.left_limb.move_to_joint_positions(left_angles,timeout=4.0)
 
     def to_the_basket(self):
-        basket_angles = {'right_s0': 1.135912773429149, 'right_s1': -0.017640779060682257, 'right_w0': 0.9357282806101024, 'right_w1': 1.2072428800658206, 'right_w2': 0.590199108138913, 'right_e0': -0.22357769983429907, 'right_e1': 1.1416652013837192}
+        basket_angles = {'right_s0': 0.5882816321540562, 'right_s1': 0.05560680356084625, 'right_w0': 0.43526704856248616, 'right_w1': 1.0239321759135136, 'right_w2': 0.28877188331942916, 'right_e0': 0.2051699303796741, 'right_e1': 1.4074273728848672}
         self.limb.move_to_joint_positions(basket_angles, timeout=4.0)
 
-    def safe_dist(self):
+    def safe_right_dist(self):
         safe_angle = {'right_s0': -1.4442429117941171, 'right_s1': 0.2519563444101792, 'right_w0': 1.2570972556720965, 'right_w1': 0.6197282383057071, 'right_w2': 1.750272078977257, 'right_e0': -0.5530000740326917, 'right_e1': -0.0502378708032473}
         self.limb.move_to_joint_positions(safe_angle, timeout=2.5)
+
+    def safe_front_dist(self):
+        safe_angle = {'right_s0': -0.01687378866673955, 'right_s1': 0.22856313739492665, 'right_w0': 1.1765632643081123, 'right_w1': 1.300048717732888, 'right_w2': 1.0530778108833365, 'right_e0': 0.06711165946998685, 'right_e1': -0.049854375606275945}
+        self.limb.move_to_joint_positions(safe_angle, timeout=2.5)        
 
     def test_promp(self, obs_realtime):
         '''
         Test ProMP
         '''
         time.sleep(2)
-        # self.this_phase = 98
+        self.this_phase = 98
         self.obs_pose = obs_realtime
-        print len(self.q_data)
-        print self.q_data[1].shape
+        # print len(self.q_data)
+        # print self.q_data[1].shape
         self.runPromp()
 
     def replay_motion(self):
@@ -80,7 +89,8 @@ class ProMP:
         self.this_phase = 98
         self.obs_pose = self.q_data[2][self.this_phase,0:3]
         print self.obs_pose
-        self.runPromp()
+        otp_angles = self.runPromp()
+        # self.limb.move_to_joint_positions(otp_angles, timeout=4.0)
 
 
         # time.sleep(2)
@@ -182,7 +192,7 @@ class ProMP:
     #     self.hand = np.matrix([0.06,0.002,0.57])
 
 
-    def runPromp(self, ):
+    def runPromp(self):
 
         '''
         ProMP Estimation
@@ -190,7 +200,7 @@ class ProMP:
         # obs_pose = self.D[1,:3]
         # print obs_pose
         param = {"nTraj":self.p_data["size"], "nTotalJoints":self.promp["nJoints"], "observedJointPos":np.array([0,1,2]), "observedJointVel":np.array([])}
-        obs = self.Observation(self.stdev,param,self.p_data,obs_pose)
+        obs = self.Observation(self.stdev,param,self.p_data,self.obs_pose)
         self.kf = self.kfLoop(self.promp,param,obs)
 
         
@@ -204,8 +214,8 @@ class ProMP:
         promp = np.array(promp[4:11])
 
         otp_angles = {'right_s0': promp[0], 'right_s1': promp[1], 'right_w0': promp[4], 'right_w1': promp[5], 'right_w2': promp[6], 'right_e0': promp[2], 'right_e1': promp[3]}
-
-        return otp_angles
+        self.limb.move_to_joint_positions(otp_angles, timeout=4.0)
+        # return otp_angles
 
 
     def loadData(self,dt,training_address):
@@ -397,10 +407,13 @@ class ProMP:
         obs["q"] = np.zeros((param["nTotalJoints"],param["nTraj"]))
         obs["qdot"] = np.zeros((param["nTotalJoints"],param["nTraj"]))
         obs["index"] = [99]
+        # print obs_data
+        # print obs
 
-        for i in obs["joint"]:
-            obs["q"][i,obs["index"]] = obs_data[0,i]
+        # for i in obs["joint"]:
+        #     obs["q"][i,obs["index"]] = obs_data[i]
 
+        obs["q"] = obs_data
         return obs
 
     def kfLoop(self,promp,param,obs):
@@ -415,15 +428,44 @@ class ProMP:
 
             z0 = np.empty((0,0), float)
             for i in range(promp["nJoints"]):
-                z0 = np.append(z0, obs["q"][i,k])
+                # z0 = np.append(z0, obs["q"][i,k])
+                z0 = np.append(z0, obs["q"])
                 z0 = np.append(z0, obs["qdot"][i,k])
             z0 = np.matrix(z0).T
 
-            x0, P0 = self.kfRecursion(x0,P0,H0,z0,R_obs)
+            # print "x0", x0.shape
+            # print "P0", P0.shape
+            # print "H0", H0.shape
+            # print "z0", z0.shape
+            # print "R_obs", R_obs.shape
+
+            # x0, P0 = self.kfRecursion(x0,P0,H0,z0,R_obs)
 
             jointKF = self.perJointPromp(x0,P0,promp)
 
         return jointKF
+
+
+
+    def kfRecursion(self,x_old,P_old,H,z,R_obs):
+        H, P_old = np.matrix(H), np.matrix(P_old)
+        tmp = np.matmul(H,np.matmul(P_old,H.T)) + R_obs
+        K = np.matmul(np.matmul(P_old,H.T),np.linalg.inv(tmp))
+
+        P_new = P_old - (K*H*P_old)
+        # print P_new.shape
+
+        # print "x_old", x_old.shape
+        # print "K", K.shape
+        # print "z", z.shape
+        # print "H", H.shape
+
+        x_new = x_old + K*(z - (H*x_old))
+
+        # print x_new
+        # return x_new, P_new
+
+
 
     def observationMatrix(self,k,p,observedJointPos,observedJointVel):
         nJoints = p["nJoints"]
@@ -460,15 +502,6 @@ class ProMP:
 
         return H
 
-    def kfRecursion(self,x_old,P_old,H,z,R_obs):
-        H, P_old = np.matrix(H), np.matrix(P_old)
-        tmp = np.matmul(H,np.matmul(P_old,H.T)) + R_obs
-        K = np.matmul(np.matmul(P_old,H.T),np.linalg.inv(tmp))
-
-        P_new = P_old - (K*H*P_old)
-        x_new = x_old + K*(z - (H*x_old))
-
-        return x_new, P_new
 
     def perJointPromp(self,xFull,Pfull,pmp):
         nBasis = pmp["nBasis"]
