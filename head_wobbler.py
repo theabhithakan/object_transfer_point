@@ -32,6 +32,7 @@ import random
 import getch
 import rospy
 import baxter_interface
+import xdisplay_image
 
 from baxter_interface import CHECK_VERSION
 
@@ -149,7 +150,7 @@ def main():
 
     print("Initializing node... ")
     rospy.init_node("rsdk_head_wobbler", disable_signals=True)
-
+    xdisplay_image.send_image("SadNEBlue.jpg")
     wobbler = Wobbler()
     # rospy.on_shutdown(wobbler.clean_shutdown)
     print("Wobbling... ")

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import sys
 import rospy
 import time
@@ -12,12 +13,11 @@ from handover.msg import skeleton
 import promp
 import move_base
 import head_wobbler
-from reflex_msgs.msg import Command 
-
+from reflex_msgs.msg import Command
+import xdisplay_image
 
 obs_realtime = skeleton
 obs_sub = None
-
 
 class HumanSaver:
     """docstring for HumanSaver"""
@@ -34,9 +34,13 @@ class HumanSaver:
         self.saver["stand_right"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.saver["stand_front"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.saver["stand_back"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["stand_back_hand1"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["stand_back_hand2"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.saver["sit_right"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.saver["sit_front"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.saver["sit_back"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["sit_back_hand1"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.saver["sit_back_hand2"] = np.matrix([0.0, 0.0, 0.0, 0.0, 0.0])
         self.demo_human_wrist = np.matrix([0.0, 0.0, 0.0, 0.0])
         self.D = np.matrix([0.0, 0.0, 0.0, 0.0])
         # self.obs_sub = rospy.Subscriber("skeleton_data", skeleton, self.callback, queue_size = 1)
@@ -124,19 +128,19 @@ class HumanSaver:
         # sio.savemat('src/handover/scripts/DataICRA19/demo_time.mat',{'time':self.ndemos_time})
 
 
-    def pointingDirection(self):
-        angle = np.arctan2(np.linalg.norm(self.P_rs[1] - self.P_rw[1]), np.linalg.norm(self.P_rs[0:2:3] - self.P_rw[0:2:3]))
+    # def pointingDirection(self):
+    #     angle = np.arctan2(np.linalg.norm(self.P_rs[1] - self.P_rw[1]), np.linalg.norm(self.P_rs[0:2:3] - self.P_rw[0:2:3]))
         
-        return np.rad2deg(angle)
+    #     return np.rad2deg(angle)
 
 def main():
     rospy.init_node("OTP_Experiment", disable_signals=True)
     grasp_pub = rospy.Publisher("/right_hand/command", Command, queue_size=10)
-    hs = HumanSaver(1.72,0.75)
+    hs = HumanSaver(1.75,0.73)
 
     face = head_wobbler.Wobbler()
     base = move_base.MoveBase()
-
+    xdisplay_image.send_image("NeutralNEGray.jpg")
 
     obs_sub = rospy.Subscriber("skeleton_data", skeleton, hs.callback, queue_size = 1)
     time.sleep(2.0)
@@ -148,8 +152,6 @@ def main():
     sit_right = promp.ProMP("src/handover/object_transfer_point/data/sit_right")
     sit_front = promp.ProMP("src/handover/object_transfer_point/data/sit_front")
     sit_back = promp.ProMP("src/handover/object_transfer_point/data/sit_back")
-
-    # stand_right.reset_right_hand()
 
     take = Command()
     take.pose.f1 = 2.0
@@ -189,15 +191,18 @@ def main():
     # time.sleep(2.0)
     face.set_neutral()
     # stand_right.reset_right_hand()
+    
+    xdisplay_image.send_image("NeutralNEGray.jpg")
+    face.look_right()
 
     text = raw_input("Start 1st case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("stand_right")
         hs.saver["stand_right"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
         obs_realtime = [[hs.saver["stand_right"][2], hs.saver["stand_right"][3], hs.saver["stand_right"][4]]]
-        face.look_right()
         stand_right.test_promp(obs_realtime)
         time.sleep(2.0)
         grasp_pub.publish(take)
@@ -216,10 +221,13 @@ def main():
     else:
         base.move_right()
 
+    xdisplay_image.send_image("NeutralNEYellow.jpg")
+
     text = raw_input("Start 2nd case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("stand_front")
         hs.saver["stand_front"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
         obs_realtime = [[hs.saver["stand_front"][2], hs.saver["stand_front"][3], hs.saver["stand_front"][4]]]
@@ -234,12 +242,18 @@ def main():
         time.sleep(2.0)
         stand_front.reset_right_hand()
 
+
+    xdisplay_image.send_image("NeutralNERed.jpg")
+    
     text = raw_input("Start 3rd case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("stand_back")
         hs.saver["stand_back"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
+        hs.saver["stand_back_hand1"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
+        hs.saver["stand_back_hand2"] = [hs.height, hs.arm_length, hs.P_lw[0, 0], hs.P_lw[0, 1], hs.P_lw[0, 2]]
         obs_realtime = [[hs.saver["stand_back"][2], hs.saver["stand_back"][3], hs.saver["stand_back"][4]]]
         stand_back.test_promp(obs_realtime)
         time.sleep(2.0)
@@ -258,14 +272,18 @@ def main():
     else:
         base.move_left()
 
+
+    xdisplay_image.send_image("NeutralNEGray.jpg")
+    face.look_right()
+    
     text = raw_input("Start 4th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("sit_right")
         hs.saver["sit_right"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
         obs_realtime = [[hs.saver["sit_right"][2], hs.saver["sit_right"][3], hs.saver["sit_right"][4]]]
-        face.look_right()
         sit_right.test_promp(obs_realtime)
         time.sleep(2.0)
         grasp_pub.publish(take)
@@ -284,10 +302,15 @@ def main():
     else:
         base.move_right()
 
+
+
+    xdisplay_image.send_image("NeutralNEYellow.jpg")
+    
     text = raw_input("Start 5th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("sit_front")
         hs.saver["sit_front"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
         obs_realtime = [[hs.saver["sit_front"][2], hs.saver["sit_front"][3], hs.saver["sit_front"][4]]]
@@ -301,13 +324,19 @@ def main():
         grasp_pub.publish(drop)
         time.sleep(2.0)
         sit_front.reset_right_hand()
-        
+    
+
+    xdisplay_image.send_image("NeutralNERed.jpg")
+    
     text = raw_input("Start 6th case? (y/n)")
     if text == 'n':
         print "ok bye"
     else:
+        xdisplay_image.send_image("NeutralNEGreen.jpg")
         hs.traj_saver("sit_back")
         hs.saver["sit_back"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
+        hs.saver["sit_back_hand1"] = [hs.height, hs.arm_length, hs.P_rw[0, 0], hs.P_rw[0, 1], hs.P_rw[0, 2]]
+        hs.saver["sit_back_hand2"] = [hs.height, hs.arm_length, hs.P_lw[0, 0], hs.P_lw[0, 1], hs.P_lw[0, 2]]
         obs_realtime = [[hs.saver["sit_back"][2], hs.saver["sit_back"][3], hs.saver["sit_back"][4]]]
         sit_back.test_promp(obs_realtime)
         time.sleep(2.0)
@@ -323,6 +352,8 @@ def main():
     with open("src/handover/object_transfer_point/data/subjects/human_" + str(hs.subject) + "/human_wrist_" + str(hs.subject), "wb") as f:
         pickle.dump(hs.saver, f)
     sio.savemat("src/handover/object_transfer_point/data/subjects/human_" + str(hs.subject) + "/human_wrist_" + str(hs.subject) + ".mat", {'D':hs.saver})
+
+    xdisplay_image.send_image("JoyNEOrange.jpg")
 
     text = raw_input("Safe to rotate? (y/n)")
     if text == 'n':
