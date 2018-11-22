@@ -25,7 +25,7 @@ class MoveBase:
         base.angular.z = -0.2
         rate = 30
         r = rospy.Rate(rate)
-        stop = 3.25
+        stop = 2.8/2
         while time.time()-start < stop:
             self.move_base.publish(base)
             r.sleep()
@@ -38,6 +38,18 @@ class MoveBase:
         rate = 30
         r = rospy.Rate(rate)
         stop = 3.25
+        while time.time()-start < stop:
+            self.move_base.publish(base)
+            r.sleep()
+
+    def move_45deg(self):
+        start = time.time()
+        # self.move_base = rospy.Publisher("/amp_wpi/twist_command", Twist, queue_size=10)
+        base = Twist()
+        base.angular.z = -0.2
+        rate = 30
+        r = rospy.Rate(rate)
+        stop = 3.25/2
         while time.time()-start < stop:
             self.move_base.publish(base)
             r.sleep()

@@ -69,7 +69,7 @@ class Saver:
 
         #Formatting the sensor data
         self.D = np.append(self.D, self.P_rw, axis=0)
-        print self.D.shape
+        # print self.D.shape
         self.D = self.D[(np.shape(self.D)[0] - 2):np.shape(self.D)[0],:] 
         # print self.D.shape
 
@@ -99,7 +99,7 @@ class Saver:
 
                 # if (e_old - e_new) > 0.0001 or self.start==1:
                 self.start = 1
-                print "moving"
+                # print "moving"
                 if count==0:
                     self.start_time = time.time()
                     t0 = self.D[0,3]
@@ -128,9 +128,9 @@ class Saver:
             self.ndemos_baxter_pos.append(self.demo_baxter_pos[1:,:])
             # self.ndemos_time.append(self.timer)
 
-        np.savetxt("src/handover/object_transfer_point/data/demo_baxter_" + str(self.i) + ".csv", self.demo_baxter_joints[1:], delimiter=",")
-        np.savetxt("src/handover/object_transfer_point/data/demo_human_" + str(self.i) + ".csv", self.demo_human_wrist[1:,:], delimiter=",")
-        np.savetxt("src/handover/object_transfer_point/data/demo_pos_" + str(self.i) + ".csv", self.demo_baxter_pos[1:,:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_45/demo_baxter_" + str(self.i) + ".csv", self.demo_baxter_joints[1:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_45/demo_human_" + str(self.i) + ".csv", self.demo_human_wrist[1:,:], delimiter=",")
+        np.savetxt("src/handover/object_transfer_point/data/sit_45/demo_pos_" + str(self.i) + ".csv", self.demo_baxter_pos[1:,:], delimiter=",")
 
         time.sleep(1)
 
@@ -147,9 +147,9 @@ class Saver:
             # self.start_time = time.time()
             self.rec()
 
-        sio.savemat('src/handover/object_transfer_point/data/demo_baxter.mat',{'baxter_demo_data':self.ndemos_baxter_joints})
-        sio.savemat('src/handover/object_transfer_point/data/demo_baxter_pos.mat',{'baxter_demo_pos_data':self.ndemos_baxter_pos})
-        sio.savemat('src/handover/object_transfer_point/data/demo_human.mat',{'human_demo_data':self.ndemos_human_wrist})
+        sio.savemat('src/handover/object_transfer_point/data/sit_45/demo_baxter.mat',{'baxter_demo_data':self.ndemos_baxter_joints})
+        sio.savemat('src/handover/object_transfer_point/data/sit_45/demo_baxter_pos.mat',{'baxter_demo_pos_data':self.ndemos_baxter_pos})
+        sio.savemat('src/handover/object_transfer_point/data/sit_45/demo_human.mat',{'human_demo_data':self.ndemos_human_wrist})
         # sio.savemat('src/handover/scripts/DataICRA19/demo_time.mat',{'time':self.ndemos_time})
         
     def callback2(self,data):

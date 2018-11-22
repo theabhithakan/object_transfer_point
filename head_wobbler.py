@@ -74,12 +74,15 @@ class Wobbler(object):
 
     def look_right(self):
 
-        self._head.set_pan(-1.0)
+        self._head.set_pan(-1.57)
+
+    def look_45(self):
+        self._head.set_pan(-1.57/2)
 
 
     def look_left(self):
 
-        self._head.set_pan(1.0)
+        self._head.set_pan(1.57)
 
 
     def wobble(self):

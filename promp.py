@@ -68,6 +68,10 @@ class ProMP:
         safe_angle = {'right_s0': -1.4442429117941171, 'right_s1': 0.2519563444101792, 'right_w0': 1.2570972556720965, 'right_w1': 0.6197282383057071, 'right_w2': 1.750272078977257, 'right_e0': -0.5530000740326917, 'right_e1': -0.0502378708032473}
         self.limb.move_to_joint_positions(safe_angle, timeout=2.5)
 
+    def safe_45_dist(self):
+        safe_angle = {'right_s0': -0.1787087617886507, 'right_s1': 0.41609228871391846, 'right_w0': 1.002456444883118, 'right_w1': 0.6124418295632514, 'right_w2': 1.3993739737484687, 'right_e0': -0.05944175553055978, 'right_e1': 0.30602916718314005}
+        self.limb.move_to_joint_positions(safe_angle, timeout=2.5)        
+
     def safe_front_dist(self):
         safe_angle = {'right_s0': -0.01687378866673955, 'right_s1': 0.22856313739492665, 'right_w0': 1.1765632643081123, 'right_w1': 1.300048717732888, 'right_w2': 1.0530778108833365, 'right_e0': 0.06711165946998685, 'right_e1': -0.049854375606275945}
         self.limb.move_to_joint_positions(safe_angle, timeout=2.5)        
